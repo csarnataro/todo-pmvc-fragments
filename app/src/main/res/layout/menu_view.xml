@@ -32,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/main_content_fragment"
-            tools:layout="@layout/tasks_view"
+            tools:layout="@layout/edit_task_view"
             />
 
     </LinearLayout>
