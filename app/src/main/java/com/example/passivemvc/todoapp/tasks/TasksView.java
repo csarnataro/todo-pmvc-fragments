@@ -3,14 +3,17 @@ package com.example.passivemvc.todoapp.tasks;
 import android.content.Context;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.passivemvc.todoapp.R;
 import com.example.passivemvc.todoapp.model.Task;
@@ -26,8 +29,10 @@ import java.util.List;
  */
 public class TasksView extends CoordinatorLayout {
 
-    FloatingActionButton addTaskButton;
-    ScrollChildSwipeRefreshLayout refreshLayout;
+    private static final String TAG = TasksView.class.getSimpleName();
+
+    private FloatingActionButton addTaskButton;
+    private ScrollChildSwipeRefreshLayout refreshLayout;
     private TasksAdapter tasksAdapter;
     private View tasksListContainer;
     private View mNoTasksView;
@@ -35,7 +40,7 @@ public class TasksView extends CoordinatorLayout {
     private TextView mNoTaskMainView;
     private TextView mNoTaskAddView;
     private TextView mFilteringLabelView;
-
+    private RecyclerView tasksList;
 
 
     public TasksView(Context context) {
@@ -55,6 +60,7 @@ public class TasksView extends CoordinatorLayout {
         refreshLayout = (ScrollChildSwipeRefreshLayout) findViewById(R.id.refresh_layout);
 
         tasksListContainer = findViewById(R.id.tasks_list_container);
+
         mNoTaskAddView = (TextView) findViewById(R.id.noTasksAdd);
 
         mNoTasksView = findViewById(R.id.noTasks);
@@ -63,8 +69,19 @@ public class TasksView extends CoordinatorLayout {
         mNoTaskMainView = (TextView) findViewById(R.id.noTasksMain);
         mFilteringLabelView = (TextView) findViewById(R.id.filteringLabel);
 
+        tasksAdapter = new TasksAdapter(new ArrayList<Task>(0), this);
 
-        tasksAdapter = new TasksAdapter(new ArrayList<Task>(0));
+        initTaskList();
+
+    }
+
+    private void initTaskList() {
+        tasksList = (RecyclerView) findViewById(R.id.tasks_list);
+        final LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        tasksList.setLayoutManager(layoutManager);
+        tasksList.setAdapter(tasksAdapter);
+
     }
 
     public void setAddTaskButtonListener(final AddTaskListener listener) {
@@ -81,10 +98,10 @@ public class TasksView extends CoordinatorLayout {
     }
 
     public void showTasks(List<Task> tasks) {
-            tasksAdapter.replaceData(tasks);
+        tasksAdapter.refreshData(tasks);
 
-            tasksListContainer.setVisibility(View.VISIBLE);
-            mNoTasksView.setVisibility(View.GONE);
+        tasksListContainer.setVisibility(View.VISIBLE);
+        mNoTasksView.setVisibility(View.GONE);
 
     }
 
@@ -92,40 +109,74 @@ public class TasksView extends CoordinatorLayout {
         tasksAdapter.setTaskItemListener(taskItemListener);
     }
 
+    public void showTaskMarkedComplete() {
+        Snackbar.make(this, getResources().getString(R.string.task_marked_complete), Snackbar.LENGTH_LONG)
+                .show();
+    }
+
+    public void showTaskMarkedActive() {
+        Snackbar.make(this, getResources().getString(R.string.task_marked_active), Snackbar.LENGTH_LONG)
+                .show();
+    }
+
+
     public interface AddTaskListener {
         void onAddTaskButtonClicked();
     }
 
-    private static class TasksAdapter extends BaseAdapter {
 
-        private List<Task> mTasks;
-        private TaskItemListener mItemListener;
+    class TasksAdapter extends RecyclerView.Adapter<TasksAdapter.ViewHolder> {
 
-        public TasksAdapter(List<Task> tasks) {
-            setList(tasks);
-        }
+        private List<Task> items;
+        private TasksView view;
+        private TaskItemListener taskItemListener;
 
-        public void setTaskItemListener(TaskItemListener taskItemListener) {
-            this.mItemListener = taskItemListener;
-        }
-
-        public void replaceData(List<Task> tasks) {
-            setList(tasks);
-            notifyDataSetChanged();
-        }
-
-        private void setList(List<Task> tasks) {
-            mTasks = tasks;
+        public TasksAdapter(
+                List<Task> items,
+                TasksView view) {
+            this.items = items;
+            this.view = view;
         }
 
         @Override
-        public int getCount() {
-            return mTasks.size();
+        public int getItemViewType(int position) {
+            return position;
         }
 
         @Override
-        public Task getItem(int i) {
-            return mTasks.get(i);
+        public ViewHolder onCreateViewHolder(ViewGroup parent, final int viewType) {
+
+            final View view = LayoutInflater.
+                    from(parent.getContext()).
+                    inflate(R.layout.tasks_task_item, parent, false);
+
+
+            final ViewHolder viewHolder = new ViewHolder(view);
+
+            viewHolder.title = (TextView) view.findViewById(R.id.title);
+            viewHolder.completedCheckBox = (CheckBox) view.findViewById(R.id.complete);
+
+            final int position = viewType;
+
+            viewHolder.completedCheckBox.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Task item = items.get(position);
+                    taskItemListener.onCompleteTaskClick(viewHolder.completedCheckBox.isChecked());
+                }
+            });
+
+            return viewHolder;
+        }
+
+
+        @Override
+        public void onBindViewHolder(ViewHolder viewHolder, final int position) {
+            final Task item = items.get(position);
+
+            viewHolder.completedCheckBox.setChecked(item.completed);
+            viewHolder.title.setText(item.getTitleForList());
+
         }
 
         @Override
@@ -134,52 +185,119 @@ public class TasksView extends CoordinatorLayout {
         }
 
         @Override
-        public View getView(int i, View view, ViewGroup viewGroup) {
-            View rowView = view;
-            if (rowView == null) {
-                LayoutInflater inflater = LayoutInflater.from(viewGroup.getContext());
-                rowView = inflater.inflate(R.layout.tasks_task_item, viewGroup, false);
+        public int getItemCount() {
+            return items.size();
+        }
+
+        public List<Task> getItems() {
+            return items;
+        }
+
+        public void setTaskItemListener(TaskItemListener taskItemListener) {
+            this.taskItemListener = taskItemListener;
+        }
+
+        public void refreshData(List<Task> tasks) {
+            this.items = tasks;
+            notifyDataSetChanged();
+        }
+
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView title;
+            CheckBox completedCheckBox;
+
+            public ViewHolder(View itemView) {
+                super(itemView);
             }
 
-            final Task task = getItem(i);
-
-            TextView titleTV = (TextView) rowView.findViewById(R.id.title);
-            titleTV.setText(task.getTitleForList());
-
-            CheckBox completeCB = (CheckBox) rowView.findViewById(R.id.complete);
-
-            // Active/completed task UI
-
-            completeCB.setChecked(task.completed);
-            if (task.completed) {
-                rowView.setBackgroundDrawable(viewGroup.getContext()
-                        .getResources().getDrawable(R.drawable.list_completed_touch_feedback));
-            } else {
-                rowView.setBackgroundDrawable(viewGroup.getContext()
-                        .getResources().getDrawable(R.drawable.touch_feedback));
-            }
-
-            completeCB.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (!task.completed) {
-                        mItemListener.onCompleteTaskClick(task);
-                    } else {
-                        mItemListener.onActivateTaskClick(task);
-                    }
-                }
-            });
-
-            rowView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    mItemListener.onTaskClick(task);
-                }
-            });
-
-            return rowView;
         }
     }
+
+
+//    private static class TasksAdapter_ extends BaseAdapter {
+//
+//        private List<Task> tasks;
+//        private TasksView parentView;
+//        // private TaskItemListener mItemListener;
+//
+//        public TasksAdapter_(List<Task> tasks, TasksView view) {
+//            this.parentView = view;
+//            setList(tasks);
+//
+//        }
+//
+//        public void replaceData(List<Task> tasks) {
+//            setList(tasks);
+//            notifyDataSetChanged();
+//        }
+//
+//        private void setList(List<Task> tasks) {
+//            this.tasks = tasks;
+//        }
+//
+//        @Override
+//        public int getCount() {
+//            return tasks.size();
+//        }
+//
+//        @Override
+//        public Task getItem(int i) {
+//            return tasks.get(i);
+//        }
+//
+//        @Override
+//        public long getItemId(int i) {
+//            return i;
+//        }
+//
+//        @Override
+//        public View getView(int i, View view, ViewGroup viewGroup) {
+//            View rowView = view;
+//            if (rowView == null) {
+//                LayoutInflater inflater = LayoutInflater.from(viewGroup.getContext());
+//                rowView = inflater.inflate(R.layout.tasks_task_item, viewGroup, false);
+//            }
+//
+//            final Task task = getItem(i);
+//
+//            TextView titleTV = (TextView) rowView.findViewById(R.id.title);
+//            titleTV.setText(task.getTitleForList());
+//
+//            CheckBox completeCB = (CheckBox) rowView.findViewById(R.id.complete);
+//
+//            // Active/completed task UI
+//
+//            completeCB.setChecked(task.completed);
+//            if (task.completed) {
+//                rowView.setBackgroundDrawable(viewGroup.getContext()
+//                        .getResources().getDrawable(R.drawable.list_completed_touch_feedback));
+//            } else {
+//                rowView.setBackgroundDrawable(viewGroup.getContext()
+//                        .getResources().getDrawable(R.drawable.touch_feedback));
+//            }
+//
+//            completeCB.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    if (!task.completed) {
+//                        mItemListener.onCompleteTaskClick(task);
+//                    } else {
+//                        mItemListener.onActivateTaskClick(task);
+//                    }
+//                }
+//            });
+//
+//            rowView.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View view) {
+//                    mItemListener.onTaskClick(task);
+//                }
+//            });
+//
+//            return rowView;
+//        }
+//    }
 
     public void showNoActiveTasks() {
         showNoTasksViews(
@@ -231,9 +349,7 @@ public class TasksView extends CoordinatorLayout {
 
         void onTaskClick(Task clickedTask);
 
-        void onCompleteTaskClick(Task completedTask);
-
-        void onActivateTaskClick(Task activatedTask);
+        void onCompleteTaskClick(boolean isChecked);
     }
 
 

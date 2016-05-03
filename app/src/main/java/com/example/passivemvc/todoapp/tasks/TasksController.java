@@ -99,8 +99,8 @@ public class TasksController extends Fragment implements TasksView.AddTaskListen
                     break;
             }
         }
-            view.setLoadingIndicator(false);
 
+        view.setLoadingIndicator(false);
         processTasks(tasksToShow);
 
 
@@ -157,12 +157,14 @@ public class TasksController extends Fragment implements TasksView.AddTaskListen
     }
 
     @Override
-    public void onCompleteTaskClick(Task completedTask) {
-
-    }
-
-    @Override
-    public void onActivateTaskClick(Task activatedTask) {
+    public void onCompleteTaskClick(boolean isChecked) {
+        if (isChecked) {
+            // TODO: update the task with 'completed'
+            view.showTaskMarkedComplete();
+        } else {
+            // TODO: update the task with 'active'
+            view.showTaskMarkedActive();
+        }
 
     }
 

@@ -15,7 +15,7 @@ import com.example.passivemvc.todoapp.tasks.TasksController;
  * @author Christian Sarnataro
  *         Created on 18/04/16.
  */
-public class MainController extends Fragment implements MenuController.MenuListener, TasksController.TasksControllerListener {
+public class MainController extends Fragment implements MenuController.MenuListener, TasksController.TasksControllerListener, EditTaskController.EditTaskControllerListener {
 
     public static final String TAG = MainController.class.getSimpleName();
 
@@ -76,6 +76,7 @@ public class MainController extends Fragment implements MenuController.MenuListe
         try {
             if (editTaskController == null) {
                 editTaskController = new EditTaskController();
+                editTaskController.setEditTaskControllerListener(this);
             }
             menuController
                     .getFragmentManager()
@@ -125,5 +126,16 @@ public class MainController extends Fragment implements MenuController.MenuListe
     public void onAddTaskButtonClicked() {
         menuController.setToolbarTitle(getString(R.string.add_task));
         injectEditTaskController();
+    }
+
+    @Override
+    public void onTaskCreated() {
+        menuController.setToolbarTitle(getString(R.string.app_name));
+        injectTaskListController();
+    }
+
+    @Override
+    public void onTaskUpdated() {
+
     }
 }

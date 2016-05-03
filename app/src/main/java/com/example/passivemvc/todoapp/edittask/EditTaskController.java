@@ -19,7 +19,8 @@ public class EditTaskController extends Fragment implements EditTaskView.OnSaveT
 
     private String mEditedTaskId;
 
-    EditTaskView view;
+    private EditTaskView view;
+    private EditTaskControllerListener editTaskControllerListener;
 
     public EditTaskController() {
 
@@ -66,6 +67,8 @@ public class EditTaskController extends Fragment implements EditTaskView.OnSaveT
         if (newTask.isEmpty()) {
             view.showEmptyTaskError();
         } else {
+            newTask.save();
+            editTaskControllerListener.onTaskCreated();
 //            mTasksRepository.saveTask(newTask);
 //            mAddTaskView.showTasksList();
         }
@@ -88,6 +91,16 @@ public class EditTaskController extends Fragment implements EditTaskView.OnSaveT
 
     private boolean isNewTask() {
         return mEditedTaskId == null;
+    }
+
+    public void setEditTaskControllerListener(EditTaskControllerListener listener) {
+        this.editTaskControllerListener = listener;
+    }
+
+    public interface EditTaskControllerListener {
+        void onTaskCreated();
+        void onTaskUpdated();
+
     }
 
 }

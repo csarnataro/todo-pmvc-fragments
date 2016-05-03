@@ -144,9 +144,13 @@ public class Task extends BaseModel implements Serializable {
 
     @Override
     public String toString() {
-        return "Task with title " + title;
+        return "Task{" +
+                "id='" + id + '\'' +
+                ", title='" + title + '\'' +
+                ", description='" + description + '\'' +
+                ", completed=" + completed +
+                '}';
     }
-
 
     public static List<Task> findAll() {
         return SQLite.select()
