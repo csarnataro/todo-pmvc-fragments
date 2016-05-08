@@ -161,4 +161,12 @@ public class Task extends BaseModel implements Serializable {
     public boolean isActive() {
         return !completed;
     }
+
+    public static void removeCompleted() {
+        SQLite.delete().from(Task.class).where(Task_Table.completed.is(true)).execute();
+    }
+
+    public static Task get(String id) {
+        return SQLite.select().from(Task.class).where(Task_Table.id.is(id)).querySingle();
+    }
 }

@@ -6,7 +6,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.TextView;
+import android.widget.EditText;
 
 import com.example.passivemvc.todoapp.R;
 
@@ -16,9 +16,9 @@ import com.example.passivemvc.todoapp.R;
  */
 public class EditTaskView extends CoordinatorLayout {
 
-    private TextView mTitle;
-    private TextView mDescription;
-    private FloatingActionButton fab;
+    private EditText title;
+    private EditText description;
+    private FloatingActionButton saveTaskButton;
 
     public EditTaskView(Context context) {
         super(context);
@@ -33,16 +33,14 @@ public class EditTaskView extends CoordinatorLayout {
     }
 
     public void initComponents() {
-        mTitle = (TextView) findViewById(R.id.add_task_title);
-        mDescription = (TextView) findViewById(R.id.add_task_description);
+        title = (EditText) findViewById(R.id.add_task_title);
+        description = (EditText) findViewById(R.id.add_task_description);
 
-        fab = (FloatingActionButton) findViewById(R.id.fab_edit_task);
-        fab.setImageResource(R.drawable.ic_done);
-
+        saveTaskButton = (FloatingActionButton) findViewById(R.id.fab_edit_task);
     }
 
     public void setSaveTaskButtonListener(final OnSaveTaskButtonListener listener) {
-        fab.setOnClickListener(new OnClickListener() {
+        saveTaskButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 listener.onSaveTaskButtonClicked();
@@ -50,16 +48,29 @@ public class EditTaskView extends CoordinatorLayout {
         });
     }
 
+    public void showEmptyTaskError() {
+        Snackbar.make(title, getResources().getString(R.string.empty_task_message), Snackbar.LENGTH_SHORT).show();
+    }
+
+    public void resetFields() {
+        title.setText("");
+        description.setText("");
+    }
+
+    public void setTitle(String title) {
+        this.title.setText(title);
+    }
+
+    public void setDescription(String description) {
+        this.description.setText(description);
+    }
+
     public String getTitle() {
-        return mTitle.getText().toString();
+        return title.getText().toString();
     }
 
     public String getDescription() {
-        return mDescription.getText().toString();
-    }
-
-    public void showEmptyTaskError() {
-        Snackbar.make(mTitle, getResources().getString(R.string.empty_task_message), Snackbar.LENGTH_LONG).show();
+        return description.getText().toString();
     }
 
     public interface OnSaveTaskButtonListener {

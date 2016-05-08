@@ -17,17 +17,14 @@ import java.util.List;
  * @author Christian Sarnataro
  *         Created on 18/04/16.
  */
-public class TasksController extends Fragment implements TasksView.AddTaskListener, TasksService.LoadTasksCallback, TasksView.TaskItemListener {
+public class TasksController extends Fragment implements TasksView.AddTaskListener, TasksView.TaskItemListener {
 
     private TasksFilterType currentFiltering = TasksFilterType.ALL_TASKS;
     private TasksView view;
-    private TasksService service;
-    private boolean firstLoad = true;
     private TasksControllerListener taskControllerListener;
+    private List<Task> allTasks;
 
     public TasksController() {
-        service = new TasksService();
-
     }
 
     @Override
@@ -53,33 +50,34 @@ public class TasksController extends Fragment implements TasksView.AddTaskListen
     @Override
     public void onResume() {
         super.onResume();
-        loadTasks(false);
+        loadTasks();
 
     }
 
-    public void loadTasks(boolean forceUpdate) {
-        // Simplification for sample: a network reload will be forced on first load.
-        loadTasks(forceUpdate || firstLoad, true);
-        firstLoad = false;
+    public void loadTasks() {
+        loadTasks(true);
     }
 
-    private void loadTasks(boolean forceUpdate, final boolean showLoadingUI) {
+    private void loadTasks(final boolean showLoadingUI) {
         if (showLoadingUI) {
             view.setLoadingIndicator(true);
         }
-        if (forceUpdate) {
-            service.refreshTasks();
-        }
+        List<Task> tasks = Task.findAll();
+        onTasksLoaded(tasks);
 
-        service.loadTasks(this);
     }
 
-
-        @Override
     public void onTasksLoaded(List<Task> tasks) {
+        allTasks = tasks;
+
+        view.setLoadingIndicator(false);
+        processTasks(getTasksToShow());
+    }
+
+    private List<Task> getTasksToShow() {
         List<Task> tasksToShow = new ArrayList<>();
         // We filter the tasks based on the requestType
-        for (Task task : tasks) {
+        for (Task task : allTasks) {
             switch (currentFiltering) {
                 case ALL_TASKS:
                     tasksToShow.add(task);
@@ -99,10 +97,7 @@ public class TasksController extends Fragment implements TasksView.AddTaskListen
                     break;
             }
         }
-
-        view.setLoadingIndicator(false);
-        processTasks(tasksToShow);
-
+        return tasksToShow;
 
     }
 
@@ -146,25 +141,23 @@ public class TasksController extends Fragment implements TasksView.AddTaskListen
         }
     }
 
-
-    @Override
-    public void onDataNotAvailable() {
-    }
-
     @Override
     public void onTaskClick(Task clickedTask) {
-
+        taskControllerListener.onTaskClicked(clickedTask.id);
     }
 
     @Override
-    public void onCompleteTaskClick(boolean isChecked) {
+    public void onCompleteTaskClick(Task task, boolean isChecked) {
+        task.completed = isChecked;
+        task.save();
+        loadTasks();
+
         if (isChecked) {
-            // TODO: update the task with 'completed'
             view.showTaskMarkedComplete();
         } else {
-            // TODO: update the task with 'active'
             view.showTaskMarkedActive();
         }
+        refreshTasks();
 
     }
 
@@ -172,9 +165,31 @@ public class TasksController extends Fragment implements TasksView.AddTaskListen
         this.taskControllerListener = taskControllerListener;
     }
 
-    public interface TasksControllerListener {
-        void onAddTaskButtonClicked();
+    public void showFilteredTasks(TasksFilterType type) {
+        currentFiltering = type;
+        processTasks(getTasksToShow());
+
     }
 
+    public void removeCompletedTasks() {
+        Task.removeCompleted();
+    }
+
+    public void refreshTasks() {
+        loadTasks(true);
+    }
+
+    public void showTaskCreatedMessage() {
+        view.showTaskSaved();
+    }
+
+    public void showTaskUpdatedMessage() {
+        view.showTaskSaved();
+    }
+
+    public interface TasksControllerListener {
+        void onAddTaskButtonClicked();
+        void onTaskClicked(String taskId);
+    }
 
 }
