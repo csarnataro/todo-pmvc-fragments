@@ -3,6 +3,9 @@ package com.example.passivemvc.todoapp.menu;
 import android.content.Context;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.view.MenuItem;
 
@@ -14,7 +17,9 @@ import com.example.passivemvc.todoapp.R;
  */
 public class MenuView extends DrawerLayout {
 
-    NavigationView navigationView;
+    private Toolbar toolbar;
+    private ActionBar ab;
+    private NavigationView navigationView;
 
     public MenuView(Context context) {
         super(context);
@@ -30,6 +35,15 @@ public class MenuView extends DrawerLayout {
 
     public void initComponents() {
         navigationView = (NavigationView) findViewById(R.id.nav_view);
+        // Set up the toolbar.
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ((AppCompatActivity) getContext()).setSupportActionBar(toolbar);
+
+        ab = ((AppCompatActivity) getContext()).getSupportActionBar();
+        ab.setHomeAsUpIndicator(R.drawable.ic_menu);
+        ab.setDisplayHomeAsUpEnabled(true);
+
+
     }
 
 
@@ -65,6 +79,20 @@ public class MenuView extends DrawerLayout {
 
     private void closeMenu() {
         closeDrawers();
+    }
+
+    public void restoreCheckedItem(int currentSelectedItem) {
+        if (navigationView.getMenu() != null) {
+            for (int i = 0, size = navigationView.getMenu().size(); i < size; i++) {
+                if (i == currentSelectedItem) {
+                    navigationView.getMenu().getItem(i).setChecked(true);
+                }
+            }
+        }
+    }
+
+    public void setToolbarTitle(String toolbarTitle) {
+        toolbar.setTitle(toolbarTitle);
     }
 
     public interface MenuSelectionListener {

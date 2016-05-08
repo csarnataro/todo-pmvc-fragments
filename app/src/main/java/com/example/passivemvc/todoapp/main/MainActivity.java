@@ -2,9 +2,7 @@ package com.example.passivemvc.todoapp.main;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
 import com.example.passivemvc.todoapp.R;
@@ -16,11 +14,7 @@ import com.example.passivemvc.todoapp.menu.MenuController;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private static final String CURRENT_FILTERING_KEY = "CURRENT_FILTERING_KEY";
-
     private MainController mainController;
-    private Toolbar toolbar;
-    private ActionBar ab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,16 +25,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Set up the toolbar.
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        ab = getSupportActionBar();
-        ab.setHomeAsUpIndicator(R.drawable.ic_menu);
-        ab.setDisplayHomeAsUpEnabled(true);
-
         initMainController();
-
     }
 
     private void initMainController() {
@@ -49,12 +34,9 @@ public class MainActivity extends AppCompatActivity {
         // Check to see if we have retained the worker fragment.
         mainController = (MainController) fm.findFragmentByTag(MenuController.TAG);
 
-
         // If not retained (or first time running), we need to create it.
         if (mainController == null) {
             mainController = MainController.newInstance(fm);   //create instance of NON UI Fragment
-            // Tell it who it is working with.
-            // mainController.setTargetFragment(this, 0);
             fm.beginTransaction().add(mainController, MenuController.TAG).commit();  //NON UI Fragment
         }
     }
@@ -69,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 // Open the navigation drawer when the home icon is selected from the toolbar.
-                mainController.showMenu();
+                mainController.homeButtonClicked();
                 return true;
         }
         return super.onOptionsItemSelected(item);
