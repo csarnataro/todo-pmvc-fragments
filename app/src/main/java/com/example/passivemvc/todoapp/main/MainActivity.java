@@ -2,9 +2,7 @@ package com.example.passivemvc.todoapp.main;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
 import com.example.passivemvc.todoapp.R;
@@ -15,8 +13,6 @@ import com.example.passivemvc.todoapp.menu.MenuController;
  *         Created on 15/04/16.
  */
 public class MainActivity extends AppCompatActivity {
-
-    private static final String CURRENT_FILTERING_KEY = "CURRENT_FILTERING_KEY";
 
     private MainController mainController;
 

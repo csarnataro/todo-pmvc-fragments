@@ -13,7 +13,6 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.passivemvc.todoapp.R;
 import com.example.passivemvc.todoapp.model.Task;
@@ -69,7 +68,7 @@ public class TasksView extends CoordinatorLayout {
         mNoTaskMainView = (TextView) findViewById(R.id.noTasksMain);
         mFilteringLabelView = (TextView) findViewById(R.id.filteringLabel);
 
-        tasksAdapter = new TasksAdapter(new ArrayList<Task>(0), this);
+        tasksAdapter = new TasksAdapter(new ArrayList<Task>(0));
 
         initTaskList();
 
@@ -110,32 +109,28 @@ public class TasksView extends CoordinatorLayout {
     }
 
     public void showTaskMarkedComplete() {
-        Snackbar.make(this, getResources().getString(R.string.task_marked_complete), Snackbar.LENGTH_LONG)
+        Snackbar.make(this, getResources().getString(R.string.task_marked_complete), Snackbar.LENGTH_SHORT)
                 .show();
     }
 
     public void showTaskMarkedActive() {
-        Snackbar.make(this, getResources().getString(R.string.task_marked_active), Snackbar.LENGTH_LONG)
+        Snackbar.make(this, getResources().getString(R.string.task_marked_active), Snackbar.LENGTH_SHORT)
                 .show();
     }
 
-
-    public interface AddTaskListener {
-        void onAddTaskButtonClicked();
+    public void showTaskSaved() {
+        Snackbar.make(this.addTaskButton, getResources().getString(R.string.successfully_saved_task_message), Snackbar.LENGTH_SHORT)
+                .show();
     }
 
 
     class TasksAdapter extends RecyclerView.Adapter<TasksAdapter.ViewHolder> {
 
         private List<Task> items;
-        private TasksView view;
         private TaskItemListener taskItemListener;
 
-        public TasksAdapter(
-                List<Task> items,
-                TasksView view) {
+        public TasksAdapter(List<Task> items) {
             this.items = items;
-            this.view = view;
         }
 
         @Override
@@ -162,7 +157,15 @@ public class TasksView extends CoordinatorLayout {
                 @Override
                 public void onClick(View v) {
                     Task item = items.get(position);
-                    taskItemListener.onCompleteTaskClick(viewHolder.completedCheckBox.isChecked());
+                    taskItemListener.onCompleteTaskClick(item, viewHolder.completedCheckBox.isChecked());
+                }
+            });
+
+            view.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Task item = items.get(position);
+                    taskItemListener.onTaskClick(item);
                 }
             });
 
@@ -214,91 +217,6 @@ public class TasksView extends CoordinatorLayout {
         }
     }
 
-
-//    private static class TasksAdapter_ extends BaseAdapter {
-//
-//        private List<Task> tasks;
-//        private TasksView parentView;
-//        // private TaskItemListener mItemListener;
-//
-//        public TasksAdapter_(List<Task> tasks, TasksView view) {
-//            this.parentView = view;
-//            setList(tasks);
-//
-//        }
-//
-//        public void replaceData(List<Task> tasks) {
-//            setList(tasks);
-//            notifyDataSetChanged();
-//        }
-//
-//        private void setList(List<Task> tasks) {
-//            this.tasks = tasks;
-//        }
-//
-//        @Override
-//        public int getCount() {
-//            return tasks.size();
-//        }
-//
-//        @Override
-//        public Task getItem(int i) {
-//            return tasks.get(i);
-//        }
-//
-//        @Override
-//        public long getItemId(int i) {
-//            return i;
-//        }
-//
-//        @Override
-//        public View getView(int i, View view, ViewGroup viewGroup) {
-//            View rowView = view;
-//            if (rowView == null) {
-//                LayoutInflater inflater = LayoutInflater.from(viewGroup.getContext());
-//                rowView = inflater.inflate(R.layout.tasks_task_item, viewGroup, false);
-//            }
-//
-//            final Task task = getItem(i);
-//
-//            TextView titleTV = (TextView) rowView.findViewById(R.id.title);
-//            titleTV.setText(task.getTitleForList());
-//
-//            CheckBox completeCB = (CheckBox) rowView.findViewById(R.id.complete);
-//
-//            // Active/completed task UI
-//
-//            completeCB.setChecked(task.completed);
-//            if (task.completed) {
-//                rowView.setBackgroundDrawable(viewGroup.getContext()
-//                        .getResources().getDrawable(R.drawable.list_completed_touch_feedback));
-//            } else {
-//                rowView.setBackgroundDrawable(viewGroup.getContext()
-//                        .getResources().getDrawable(R.drawable.touch_feedback));
-//            }
-//
-//            completeCB.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    if (!task.completed) {
-//                        mItemListener.onCompleteTaskClick(task);
-//                    } else {
-//                        mItemListener.onActivateTaskClick(task);
-//                    }
-//                }
-//            });
-//
-//            rowView.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    mItemListener.onTaskClick(task);
-//                }
-//            });
-//
-//            return rowView;
-//        }
-//    }
-
     public void showNoActiveTasks() {
         showNoTasksViews(
                 getResources().getString(R.string.no_tasks_active),
@@ -345,12 +263,13 @@ public class TasksView extends CoordinatorLayout {
     }
 
 
-    interface TaskItemListener {
-
-        void onTaskClick(Task clickedTask);
-
-        void onCompleteTaskClick(boolean isChecked);
+    public interface AddTaskListener {
+        void onAddTaskButtonClicked();
     }
 
+    interface TaskItemListener {
+        void onTaskClick(Task clickedTask);
+        void onCompleteTaskClick(Task task, boolean isChecked);
+    }
 
 }

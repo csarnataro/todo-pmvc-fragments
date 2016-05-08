@@ -1,10 +1,12 @@
 package com.example.passivemvc.todoapp.edittask;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.passivemvc.todoapp.R;
 import com.example.passivemvc.todoapp.model.Task;
@@ -35,17 +37,25 @@ public class EditTaskController extends Fragment implements EditTaskView.OnSaveT
         return view;
     }
 
+    private void initFieldsInView() {
+        if (isNewTask()) {
+            view.resetFields();
+        } else {
+            Task task = Task.get(mEditedTaskId);
+            view.setTitle(task.title);
+            view.setDescription(task.description);
+        }
+    }
+
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onResume() {
+        super.onResume();
         setTaskIdIfAny();
+        initFieldsInView();
     }
 
     private void initListeners(EditTaskView view) {
-
         view.setSaveTaskButtonListener(this);
-
-
     }
 
     @Override
@@ -53,11 +63,14 @@ public class EditTaskController extends Fragment implements EditTaskView.OnSaveT
         if (isNewTask()) {
             createTask(
                     view.getTitle(),
-                    view.getDescription());
+                    view.getDescription()
+            );
         } else {
             updateTask(
+                    mEditedTaskId,
                     view.getTitle(),
-                    view.getDescription());
+                    view.getDescription()
+            );
         }
 
     }
@@ -69,23 +82,25 @@ public class EditTaskController extends Fragment implements EditTaskView.OnSaveT
         } else {
             newTask.save();
             editTaskControllerListener.onTaskCreated();
-//            mTasksRepository.saveTask(newTask);
-//            mAddTaskView.showTasksList();
         }
     }
 
-    public void updateTask(String title, String description) {
-//        if (mTaskId == null) {
-//            throw new RuntimeException("updateTask() was called but task is new.");
-//        }
-//        mTasksRepository.saveTask(new Task(title, description, mTaskId));
-//        mAddTaskView.showTasksList(); // After an edit, go back to the list.
+    public void updateTask(String id, String title, String description) {
+        if (id == null) {
+            throw new RuntimeException("updateTask() was called but task is new.");
+        }
+        Task existingTask = new Task(title, description, id);
+        existingTask.save(); // After an edit, go back to the list.
+        editTaskControllerListener.onTaskUpdated();;
     }
 
 
     private void setTaskIdIfAny() {
         if (getArguments() != null && getArguments().containsKey(ARGUMENT_EDIT_TASK_ID)) {
             mEditedTaskId = getArguments().getString(ARGUMENT_EDIT_TASK_ID);
+        } else {
+            // reset for same fragment
+            mEditedTaskId = null;
         }
     }
 
@@ -95,6 +110,11 @@ public class EditTaskController extends Fragment implements EditTaskView.OnSaveT
 
     public void setEditTaskControllerListener(EditTaskControllerListener listener) {
         this.editTaskControllerListener = listener;
+    }
+
+    public void deleteCurrentTask() {
+        Task currentTask = Task.get(mEditedTaskId);
+        currentTask.delete();
     }
 
     public interface EditTaskControllerListener {
